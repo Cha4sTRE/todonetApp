@@ -1,0 +1,186 @@
+<div class="container-fluid py-4">
+  <!-- Header -->
+  <div class="row mb-4">
+    <div class="col">
+      <div class="d-flex justify-content-between align-items-center">
+        <div>
+          <h1 class="h3 mb-1 text-primary">
+            <i class="bi bi-kanban-fill me-2"></i>Tablero de Tareas
+          </h1>
+          <p class="text-muted mb-0">Organiza y gestiona tus tareas diarias</p>
+        </div>
+        <button class="btn btn-primary" (click)="openTaskForm()">
+          <i class="bi bi-plus-circle me-2"></i>Nueva Tarea
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Statistics -->
+  <div class="row mb-4">
+    <div class="col-md-4">
+      <div class="card border-0 bg-primary text-white">
+        <div class="card-body text-center">
+          <h3 class="card-title display-6">{{ totalTasks() }}</h3>
+          <p class="card-text mb-0">Total Tareas</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card border-0 bg-warning text-dark">
+        <div class="card-body text-center">
+          <h3 class="card-title display-6">{{ pendingTasksCount() }}</h3>
+          <p class="card-text mb-0">Pendientes</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card border-0 bg-success text-white">
+        <div class="card-body text-center">
+          <h3 class="card-title display-6">{{ completedTasksCount() }}</h3>
+          <p class="card-text mb-0">Completadas</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  @if (isLoading()) {
+    <div class="text-center py-5">
+      <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Cargando...</span>
+      </div>
+      <p class="mt-2 text-muted">Cargando tareas...</p>
+    </div>
+  }
+
+
+  <!-- Task Board -->
+  @if (!isLoading()){
+
+    <div  class="row g-4">
+      @for (status of taskStatuses(); track status.key) {
+        <div class="col-md-6">
+
+          <div class="card h-100 border-0 shadow-sm">
+            <div
+              class="card-header py-3"
+              [style.background]="getStatusColor(status.key) + '20'"
+              [style.border-left]="'4px solid ' + getStatusColor(status.key)">
+
+              <div class="d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0 fw-bold">
+                  {{ status.name }}
+                </h5>
+                <span class="badge rounded-pill" [ngClass]="{
+              'bg-danger': status.key === 'pending',
+              'bg-success': status.key === 'completed'
+            }">
+              {{ getTasksByStatus(status.key).length }}
+            </span>
+              </div>
+            </div>
+
+            <div
+              class="card-body p-3"
+              cdkDropList
+              [id]="status.key"
+              [cdkDropListData]="getTasksByStatus(status.key)"
+              (cdkDropListDropped)="drop($event, status.key)"
+              [cdkDropListConnectedTo]="getConnectedLists()"
+              [class.bg-light]="getTasksByStatus(status.key).length === 0">
+              @if (getTasksByStatus(status.key).length === 0) {
+                <div
+                  class="text-center text-muted py-5">
+                  <i class="bi bi-inbox display-6 d-block mb-2"></i>
+                  <p class="mb-0">No hay tareas {{ status.key === 'pending' ? 'pendientes' : 'completadas' }}</p>
+                </div>
+              }
+
+              @for (task of getTasksByStatus(status.key); track task.id) {
+                <app-task-item
+                  [task]="task"
+                  (edit)="openTaskForm($event)"
+                  (delete)="deleteTask($event)">
+                </app-task-item>
+              }
+
+              <div *cdkDragPlaceholder  class="drop-placeholder p-3 border-2 border-dashed rounded mb-2"></div>
+            </div>
+          </div>
+        </div>
+      }
+    </div>
+  }
+
+</div>
+
+<!-- Modal para crear/editar tarea -->
+@if (showTaskForm()) {
+
+  <div class="modal fade show d-block" style="background-color: rgba(0,0,0,0.5)">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">
+            {{ editingTask() ? 'Editar Tarea' : 'Nueva Tarea' }}
+          </h5>
+          <button type="button" class="btn-close" (click)="closeTaskForm()"></button>
+        </div>
+
+        <div class="modal-body">
+          <form (ngSubmit)="saveTask()">
+            <div class="mb-3">
+              <label for="taskTitle" class="form-label">Título</label>
+              <input
+                type="text"
+                class="form-control"
+                id="taskTitle"
+                [(ngModel)]="newTask().title"
+                name="title"
+                required
+                placeholder="Ingresa el título de la tarea">
+            </div>
+
+            <div class="mb-3">
+              <label for="taskDescription" class="form-label">Descripción</label>
+              <textarea
+                class="form-control"
+                id="taskDescription"
+                rows="3"
+                [(ngModel)]="newTask().description"
+                name="description"
+                placeholder="Describe la tarea..."></textarea>
+            </div>
+            @if (editingTask()) {
+              @if (editingTask()) {
+                <div class="mb-3">
+                  <div class="form-check">
+                    <input
+                      class="form-check-input"
+                      type="checkbox"
+                      id="taskCompleted"
+                      [(ngModel)]="newTask().status"
+                      name="isCompleted">
+                    <label class="form-check-label" for="taskCompleted">
+                      Tarea completada
+                    </label>
+                  </div>
+                </div>
+              }
+
+            }
+            <div class="d-flex gap-2 justify-content-end">
+              <button type="button" class="btn btn-secondary" (click)="closeTaskForm()">
+                Cancelar
+              </button>
+              <button type="submit" class="btn btn-primary">
+                {{ editingTask() ? 'Actualizar' : 'Crear Tarea' }}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+}

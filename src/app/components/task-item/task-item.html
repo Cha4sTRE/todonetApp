@@ -1,0 +1,51 @@
+<div class="card task-card mb-3" cdkDrag>
+  <div class="card-body">
+    <div class="d-flex justify-content-between align-items-start mb-2">
+      <h6 class="card-title mb-0 fw-bold">{{ task.title }}</h6>
+      <div class="dropdown">
+        <button class="btn btn-sm btn-outline-secondary border-0" type="button" data-bs-toggle="dropdown">
+          <i class="bi bi-three-dots-vertical"></i>
+        </button>
+        <ul class="dropdown-menu dropdown-menu-end">
+          <li>
+            <a class="dropdown-item" href="#" (click)="editTask(); $event.preventDefault()">
+              <i class="bi bi-pencil me-2"></i>Editar
+            </a>
+          </li>
+          <li>
+            <a class="dropdown-item text-danger" href="#" (click)="deleteTask(); $event.preventDefault()">
+              <i class="bi bi-trash me-2"></i>Eliminar
+            </a>
+          </li>
+        </ul>
+      </div>
+    </div>
+    @if (task.description) {
+      {{ task.description }}
+    }
+
+    <div class="d-flex justify-content-between align-items-center">
+      @if (task.date){
+        <small class="text-muted">
+          <i class="bi bi-calendar3 me-1"></i>
+          {{ formatDate(task.date) }}
+        </small>
+      }
+
+
+      <span class="badge" [ngClass]="{
+        'bg-warning text-dark': !task.status,
+        'bg-success': task.date
+      }">
+        {{ task.status ? 'Completada' : 'Pendiente' }}
+      </span>
+    </div>
+  </div>
+
+  <!-- Drag handle -->
+  <div class="card-footer bg-transparent border-0 py-2">
+    <div class="drag-handle text-center text-muted">
+      <i class="bi bi-grip-horizontal"></i>
+    </div>
+  </div>
+</div>
